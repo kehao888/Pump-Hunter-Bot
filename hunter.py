@@ -1,6 +1,6 @@
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def send_telegram(message):
     token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -10,11 +10,12 @@ def send_telegram(message):
         "chat_id": chat_id, 
         "text": message, 
         "parse_mode": "HTML",
-        "disable_web_page_preview": True
+        "disable_web_page_preview": False
     }
     requests.post(url, json=payload)
 
 def fetch_live_signals():
+    # 模拟请求 GMGN 的 Pump 实时榜单
     url = "https://gmgn.ai/api/v1/token_list/sol/pump?limit=10&orderby=progress&direction=desc"
     headers = {"User-Agent": "Mozilla/5.0"}
     try:
@@ -26,22 +27,22 @@ def fetch_live_signals():
         return []
 
 def master_filter():
-    # 1. 获取当前北京时间 (GitHub 服务器默认是 UTC，我们加 8 小时)
-    now = datetime.now()
-    # 简单的报时逻辑：每小时的第 0 分钟运行那一轮会发报时包
-    # 或者为了测试，我们设置成每轮运行都打印日志，每小时报一次
+    # 🕒 核心修正：获取 UTC 并增加 8 小时转换为北京时间
+    bj_time = datetime.utcnow() + timedelta(hours=8)
+    time_str = bj_time.strftime('%Y-%m-%d %H:%M:%S')
     
-    print(f"📡 巡逻中... 当前时间: {now.strftime('%H:%M:%S')}")
-    
-    # 模拟心跳：如果是每小时的 0 分，发一条报时消息
-    if now.minute == 0:
-        send_telegram(f"⏰ <b>大师报时：指挥部运行正常！</b>\n当前时间：{now.strftime('%Y-%m-%d %H:%M')}\n状态：正在严密监控‘金狗’信号...")
+    print(f"🚀 大师级指挥部正在巡逻... 北京时间: {time_str}")
 
+    # --- 1. 每整点发一次心跳包报时 ---
+    if bj_time.minute == 0:
+        send_telegram(f"⏰ <b>大师报时：指挥部运行正常！</b>\n北京时间：{time_str}\n状态：正在严密嗅探‘金狗’...")
+
+    # --- 2. 扫描市场 ---
     tokens = fetch_live_signals()
-    
     found_any = False
+    
     for token in tokens:
-        # --- 保持你之前的硬核过滤标准 ---
+        # 硬核过滤标准：池子 > $3000，持仓 < 10%
         progress = token.get("progress", 0)
         dev_hold = token.get("dev_p", 100)
         liquidity = token.get("liquidity", 0)
@@ -54,14 +55,16 @@ def master_filter():
                 f"<b>🎯 发现高价值金狗！</b>\n\n"
                 f"<b>代币：</b> ${token['symbol']}\n"
                 f"<b>💧 池子：</b> ${liquidity}\n"
-                f"👉 <a href='{gmgn_link}'>进入终端</a>"
+                f"<b>北京时间：</b> {time_str}\n"
+                f"👉 <a href='{gmgn_link}'>立即进入终端</a>"
             )
             send_telegram(alert_msg)
             found_any = True
-            break # 抓到一个最稳的就收工
+            print(f"✅ 已捕捉并发送信号: {token['symbol']}")
+            break 
 
     if not found_any:
-        print("💡 本轮未发现符合标准的高质量信号。")
+        print(f"💡 {time_str} 扫描完毕：暂无符合硬核标准的信号。")
 
 if __name__ == "__main__":
     master_filter()
