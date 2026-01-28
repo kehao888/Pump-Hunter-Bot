@@ -1,17 +1,26 @@
-# Pump-Hunter-Bot V1.0 - 核心逻辑：只抓高概率金狗
-import requests
-import time
+name: Auto-Hunter-Clock
 
-# 这里是你未来的筛选标准（由我这个大师为你预设）
-MIN_PROGRESS = 70.0  # 进度至少要到 70%
-MIN_SMART_MONEY = 3  # 至少有 3 个聪明钱钱包在买
+on:
+  schedule:
+    # 每 5 分钟自动运行一次
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    # 支持你随时手动点击按钮运行
 
-def scan_pump_fun():
-    print("🚀 大师机器人正在巡逻中...")
-    # 这里未来会接入 GMGN 的 API 获取实时数据
-    # 逻辑：自动过滤掉没有推特、进度太低、庄家控盘太重的项目
-    pass 
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检查代码内容
+        uses: actions/checkout@v2
 
-if __name__ == "__main__":
-    scan_pump_fun()
-    print("✅ 扫描完成。发现 0 个安全目标。继续监控...")
+      - name: 安装 Python 环境
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: 安装依赖插件 (修复报错的关键)
+        run: pip install requests  #
+
+      - name: 执行巡逻脚本
+        run: python hunter.py
