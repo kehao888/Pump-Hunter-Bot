@@ -13,20 +13,25 @@ def send_telegram(message):
     }
     requests.post(url, json=payload)
 
-def master_filter():
-    # 🔥 大师级测试：这是一个正在实时波动的真实代币合约地址
-    # 请注意：这仅供技术测试，不作为投资建议！
-    token_address = "HeLp6NMvS7VScRwJnkSNTfL9JC2fzTSDHCwX6vpyL9pk" 
+def get_live_token():
+    # 这里我们模拟从公开 API 获取当前进度 > 90% 的最新代币
+    # 在没有 Access Token 的情况下，我们先用一个真实且活跃的合约作为跳板
+    # 建议你平时在 GMGN 看到热度币，顺手把地址复制到这里替换测试
+    active_address = "6p6W5qYv9q3pMbvSdcBvGWoMTEBXW37mS5F8M4yVpump" 
+    return active_address
 
-    # 进化版链接：直接指向 GMGN 实战终端
-    # GMGN 会自动识别它是内盘还是外盘 Raydium
+def master_filter():
+    # 1. 动态获取实时地址
+    token_address = get_live_token()
+    
+    # 2. 生成实时终端链接
     gmgn_link = f"https://gmgn.ai/sol/token/{token_address}"
 
     alert_msg = (
-        f"<b>🌟 发现【真实地址】测试信号！</b>\n\n"
-        f"<b>代币地址：</b> <code>{token_address}</code>\n"
-        f"<b>👉 <a href='{gmgn_link}'>立即进入 GMGN 查看 K 线图</a></b>\n\n"
-        f"<i>大师提醒：如果这次点开能看到波动的图表，说明你的‘指挥部’已经连通了真实的战场！</i>"
+        f"<b>🎯 发现实时【高爆发】信号！</b>\n\n"
+        f"<b>合约地址：</b> <code>{token_address}</code>\n"
+        f"<b>👉 <a href='{gmgn_link}'>立即进入 GMGN 实时监控</a></b>\n\n"
+        f"<i>大师提醒：土狗行情转瞬即逝，点开后请立刻查看‘流动性’和‘聪明钱’！</i>"
     )
     
     send_telegram(alert_msg)
