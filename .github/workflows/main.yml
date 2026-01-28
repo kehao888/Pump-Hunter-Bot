@@ -1,36 +1,22 @@
-name: Full-Auto-Hunter-Deploy
+name: Pump-Hunter-Classic
 
 on:
   schedule:
-    - cron: '*/1 * * * *'
-  workflow_dispatch:
+    - cron: '*/1 * * * *' # 每分钟巡逻一次
+  workflow_dispatch:      # 支持手动一键启动
 
 jobs:
-  build-and-run:
+  hunt:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. 拉取仓库全量文件
+      - name: 1. 拉取代码
         uses: actions/checkout@v3
 
-      - name: 2. 安装 Python 及量化依赖库
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-      - run: |
-          pip install pandas scikit-learn joblib requests  # 确保能读取 .pkl
+      - name: 2. 安装必要插件
+        run: pip install requests
 
-      - name: 3. 安装并编译 Go 核心（执行端）
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.21'
-      - run: |
-          # 编译你上传的 Go 闭环代码
-          go build -o trading_engine ._Initialize.go ._Sell.go ._buy-coin.go ._bonding-curve.go ._types.go
-
-      - name: 4. 联调运行
+      - name: 3. 猎犬出动
         env:
-          RPC_URL: ${{ secrets.RPC_URL }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python hunter_pro.py
+        run: python hunter.py
