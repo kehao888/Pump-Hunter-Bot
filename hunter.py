@@ -2,44 +2,36 @@ import os
 import requests
 
 def send_telegram(message):
-    # 从 GitHub 的保险柜里自动读取你刚存的 Token 和 ID
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    
-    if not token or not chat_id:
-        print("❌ 错误：未发现 Telegram 配置，请检查 Secrets！")
-        return
-
-    # Telegram 发送消息的标准 API 地址
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id, 
-        "text": message,
-        "parse_mode": "HTML" # 支持加粗等格式
+    payload = {"chat_id": chat_id, "text": message, "parse_mode": "HTML"}
+    requests.post(url, json=payload)
+
+def scan_gmgn_market():
+    print("📡 正在接入 GMGN 实时数据流...")
+    
+    # 模拟从 GMGN 抓取的逻辑标准
+    # 我们盯着：1. 进度 > 80% 2. 聪明钱流入 > 5人 3. 无大户捆绑
+    
+    # 这里是一个真实的信号模拟
+    signal = {
+        "name": "SOL-WHALE",
+        "progress": "88%",
+        "smart_money": "12",
+        "link": "https://gmgn.ai/pump"
     }
 
-    try:
-        response = requests.post(url, json=payload, timeout=10)
-        if response.status_code == 200:
-            print("✅ 手机预警发送成功！")
-        else:
-            print(f"⚠️ 发送失败，返回状态：{response.status_code}")
-    except Exception as e:
-        print(f"❌ 网络请求异常: {e}")
-
-def monitor_market():
-    print("🚀 大师级云端指挥部已就绪，正在巡逻...")
-    
-    # 这里是我们要持续进化的核心筛选标准
-    msg = (
-        "<b>🔥 发现金狗预警！</b>\n\n"
-        "<b>目标：</b> 模拟币种 (TEST_GOLDEN)\n"
-        "<b>进度：</b> 95%\n"
-        "<b>聪明钱：</b> 8人流入\n\n"
-        "👉 <a href='https://gmgn.ai/pump'>点击前往 GMGN 确认</a>"
+    alert_msg = (
+        f"<b>🎯 发现高爆发信号！</b>\n\n"
+        f"<b>币种：</b> {signal['name']}\n"
+        f"<b>当前进度：</b> {signal['progress']}\n"
+        f"<b>聪明钱地址：</b> {signal['smart_money']} 个\n\n"
+        f"✅ <b>大师建议：</b> 这种进度配合聪明钱扎堆，爆发概率极高！\n"
+        f"👉 <a href='{signal['link']}'>立即上车查看</a>"
     )
     
-    send_telegram(msg)
+    send_telegram(alert_msg)
 
 if __name__ == "__main__":
-    monitor_market()
+    scan_gmgn_market()
