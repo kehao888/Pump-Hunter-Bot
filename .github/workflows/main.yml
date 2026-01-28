@@ -1,0 +1,17 @@
+name: Auto-Hunter-Clock
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # 每 5 分钟自动运行一次
+  workflow_dispatch:        # 允许你随时点按钮运行
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Run Script
+        run: python hunter.py
