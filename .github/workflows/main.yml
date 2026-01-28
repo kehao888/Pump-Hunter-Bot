@@ -1,9 +1,9 @@
-name: Pump-Hunter-Classic
+name: Pump-Hunter-Classic-Pro
 
 on:
   schedule:
-    - cron: '*/1 * * * *' # 每分钟巡逻一次
-  workflow_dispatch:      # 支持手动一键启动
+    - cron: '*/1 * * * *' # 每分钟极速扫描
+  workflow_dispatch:      # 允许手动随时触发
 
 jobs:
   hunt:
@@ -12,10 +12,10 @@ jobs:
       - name: 1. 拉取代码
         uses: actions/checkout@v3
 
-      - name: 2. 安装必要插件
+      - name: 2. 安装必要组件
         run: pip install requests
 
-      - name: 3. 猎犬出动
+      - name: 3. 执行大师巡逻
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
