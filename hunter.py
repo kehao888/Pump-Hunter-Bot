@@ -1,29 +1,26 @@
-import requests
-import os
+name: Auto-Hunter-Clock
 
-# 大师级过滤标准
-TARGET_PROGRESS = 70.0  # 进度大于 70% 才有爆发力
-SMART_MONEY_COUNT = 3   # 至少有 3 个聪明钱地址在场
+on:
+  schedule:
+    # 每 5 分钟自动运行一次
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    # 支持你随时手动点击按钮运行
 
-def check_pump_market():
-    print("🚀 大师级机器人正在执行全盘扫描...")
-    
-    # 这里模拟抓取 GMGN 列表数据的逻辑
-    # 我们会检查：1. 是否有社交媒体 2. 进度 3. 聪明钱流入
-    
-    print(f"📡 正在监控进度 > {TARGET_PROGRESS}% 的项目...")
-    
-    # 模拟发现一个潜在金狗
-    found_gold = False 
-    
-    if found_gold:
-        send_telegram_msg("🔥 发现高胜率金狗！进度：92%，聪明钱：8人。快去 GMGN 查看！")
-    else:
-        print("✅ 扫描完毕。当前暂无符合‘大师标准’的目标，继续巡逻。")
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检查代码内容
+        uses: actions/checkout@v2
 
-def send_telegram_msg(message):
-    # 以后我们会在这里接入 Telegram 的通知功能
-    print(f"📢 模拟发送消息到手机: {message}")
+      - name: 安装 Python 环境
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
 
-if __name__ == "__main__":
-    check_pump_market()
+      - name: 安装依赖插件 (修复报错的关键)
+        run: pip install requests  #
+
+      - name: 执行巡逻脚本
+        run: python hunter.py
