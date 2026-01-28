@@ -14,6 +14,8 @@ jobs:
 
       - name: 2. 配置 Python 环境
         uses: actions/setup-python@v2
+- name: 安装依赖
+        run: pip install requests
         with:
           python-version: '3.9'
 
