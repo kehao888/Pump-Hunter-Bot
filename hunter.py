@@ -1,70 +1,42 @@
 import os
-import requests
+import joblib
+import json
+import pandas as pd
 from datetime import datetime, timedelta
 
-def send_telegram(message):
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id, 
-        "text": message, 
-        "parse_mode": "HTML",
-        "disable_web_page_preview": False
-    }
-    requests.post(url, json=payload)
+# 1. 动态获取根目录路径，确保在 GitHub 环境下读取准确
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, 'scaler-bonk-07-12wanshang-140-noscam.pkl')
+CONFIG_PATH = os.path.join(BASE_DIR, 'modified04-09wanshang.json')
+BLACKLIST_PATH = os.path.join(BASE_DIR, '._blacklist.json')
 
-def fetch_live_signals():
-    # 模拟请求 GMGN 的 Pump 实时榜单
-    url = "https://gmgn.ai/api/v1/token_list/sol/pump?limit=10&orderby=progress&direction=desc"
-    headers = {"User-Agent": "Mozilla/5.0"}
+def load_essentials():
+    """初始化加载：模型、配置与黑名单"""
     try:
-        response = requests.get(url, headers=headers, timeout=10)
-        data = response.json()
-        if data.get("code") == 0:
-            return data["data"]["rank"]
-    except:
-        return []
-
-def master_filter():
-    # 🕒 核心修正：获取 UTC 并增加 8 小时转换为北京时间
-    bj_time = datetime.utcnow() + timedelta(hours=8)
-    time_str = bj_time.strftime('%Y-%m-%d %H:%M:%S')
-    
-    print(f"🚀 大师级指挥部正在巡逻... 北京时间: {time_str}")
-
-    # --- 1. 每整点发一次心跳包报时 ---
-    if bj_time.minute == 0:
-        send_telegram(f"⏰ <b>大师报时：指挥部运行正常！</b>\n北京时间：{time_str}\n状态：正在严密嗅探‘金狗’...")
-
-    # --- 2. 扫描市场 ---
-    tokens = fetch_live_signals()
-    found_any = False
-    
-    for token in tokens:
-        # 硬核过滤标准：池子 > $3000，持仓 < 10%
-        progress = token.get("progress", 0)
-        dev_hold = token.get("dev_p", 100)
-        liquidity = token.get("liquidity", 0)
+        # 加载你发的机器学习标量器
+        scaler = joblib.load(MODEL_PATH)
         
-        if progress > 80 and dev_hold < 10 and liquidity > 3000:
-            address = token["address"]
-            gmgn_link = f"https://gmgn.ai/sol/token/{address}"
+        # 加载 JSON 配置文件
+        with open(CONFIG_PATH, 'r') as f:
+            config = json.load(f)
             
-            alert_msg = (
-                f"<b>🎯 发现高价值金狗！</b>\n\n"
-                f"<b>代币：</b> ${token['symbol']}\n"
-                f"<b>💧 池子：</b> ${liquidity}\n"
-                f"<b>北京时间：</b> {time_str}\n"
-                f"👉 <a href='{gmgn_link}'>立即进入终端</a>"
-            )
-            send_telegram(alert_msg)
-            found_any = True
-            print(f"✅ 已捕捉并发送信号: {token['symbol']}")
-            break 
+        # 加载黑名单
+        with open(BLACKLIST_PATH, 'r') as f:
+            blacklist = json.load(f)
+            
+        print("✅ 核心文件（PKL/JSON/Blacklist）加载成功")
+        return scaler, config, blacklist
+    except Exception as e:
+        print(f"❌ 加载失败，请确认文件是否在根目录: {e}")
+        return None, None, None
 
-    if not found_any:
-        print(f"💡 {time_str} 扫描完毕：暂无符合硬核标准的信号。")
+def main():
+    # 转换北京时间
+    bj_now = datetime.utcnow() + timedelta(hours=8)
+    print(f"🚀 指挥部启动 | 北京时间: {bj_now.strftime('%Y-%m-%d %H:%M:%S')}")
 
-if __name__ == "__main__":
-    master_filter()
+    scaler, config, blacklist = load_essentials()
+    if not scaler: return
+
+    # 后续接你 fetch_data -> predict -> execute_trade 的逻辑
+    # ...
