@@ -23,7 +23,7 @@ def get_real_time_pump():
         search_url = "https://gmgn.ai/api/v1/token_list/sol/pump?limit=1&orderby=progress&direction=desc"
         # 注意：如果被反爬虫拦截，我们仍需手动在 GMGN 随便找一个进度 90% 以上的地址填入此处进行验证
         # 建议你现在去 GMGN 首页找一个进度 95% 的币，把地址贴到下面的引号里替代测试
-        active_address = "6p6W5qYv9q3pMbvSdcBvGWoMTEBXW37mS5F8M4yVpump" 
+        active_address = "CS4CDVmsCiBMhQuaTz9wygwjknSUZaJhxLFAVPCEpump" 
         return active_address
     except:
         return None
