@@ -14,47 +14,62 @@ def send_telegram(message):
     requests.post(url, json=payload)
 
 def fetch_live_signals():
-    # 模拟浏览器请求 GMGN 的 Pump 实时榜单
-    # 我们盯着进度最快（即将内盘毕业）的项目
-    url = "https://gmgn.ai/api/v1/token_list/sol/pump?limit=5&orderby=progress&direction=desc"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
+    # 模拟请求包含详细指标的 API
+    url = "https://gmgn.ai/api/v1/token_list/sol/pump?limit=10&orderby=progress&direction=desc"
+    headers = {"User-Agent": "Mozilla/5.0"}
     
     try:
         response = requests.get(url, headers=headers, timeout=10)
         data = response.json()
-        # 抓取排在第一位的那个最热代币
         if data.get("code") == 0:
-            return data["data"]["rank"][0]
-    except Exception as e:
-        print(f"📡 抓取失败 (可能被反爬虫): {e}")
-        return None
+            return data["data"]["rank"]
+    except:
+        return []
 
-def main():
-    print("🔎 大师正在扫描 GMGN 实时盘面...")
-    token = fetch_live_signals()
+def master_filter():
+    print("🔎 大师正在开启‘防收割’扫描模式...")
+    tokens = fetch_live_signals()
     
-    if token:
+    for token in tokens:
+        # --- 大师级过滤标准 ---
+        progress = token.get("progress", 0)
+        dev_hold = token.get("dev_p", 100)  # 开发者持仓比例
+        has_twitter = token.get("twitter_link", "") # 社交媒体
+        smart_money_count = token.get("sw_count", 0) # 聪明钱人数
+
+        # 1. 进度过滤：只看即将毕业的 (进度 > 85%)
+        if progress < 85:
+            continue
+            
+        # 2. 开发者持仓过滤：超过 10% 直接判定为‘收割盘’，剔除！
+        if dev_hold > 10:
+            print(f"⚠️ 剔除危险盘: {token['symbol']} (开发者持仓过高: {dev_hold}%)")
+            continue
+            
+        # 3. 社交过滤：没有推特的项目大概率是‘三无产品’，剔除！
+        if not has_twitter:
+            print(f"⚠️ 剔除草台班子: {token['symbol']} (无社交媒体)")
+            continue
+
+        # 4. 聪明钱过滤：至少有 3 个聪明钱地址在里面才算‘有眼光’
+        if smart_money_count < 3:
+            continue
+
+        # --- 通过所有过滤，正式报警 ---
         address = token["address"]
-        symbol = token["symbol"]
-        progress = token["progress"]
-        
         gmgn_link = f"https://gmgn.ai/sol/token/{address}"
         
         alert_msg = (
-            f"<b>🚨 发现【即将毕业】的高爆发项目！</b>\n\n"
-            f"<b>代币名称：</b> ${symbol}\n"
-            f"<b>当前进度：</b> <code>{progress}%</code>\n"
-            f"<b>合约地址：</b> <code>{address}</code>\n\n"
-            f"👉 <a href='{gmgn_link}'>立即进入 GMGN 实时实战终端</a>\n\n"
-            f"<i>大师提醒：该币进度已超 90%，随时可能冲上外盘！</i>"
+            f"<b>🌟 发现【大师级】高胜率金狗！</b>\n\n"
+            f"<b>代币：</b> ${token['symbol']}\n"
+            f"<b>📈 进度：</b> <code>{progress}%</code>\n"
+            f"<b>🛡️ 开发者：</b> 持仓 {dev_hold}% (安全)\n"
+            f"<b>👥 聪明钱：</b> {smart_money_count} 位大牛已入场\n\n"
+            f"👉 <a href='{gmgn_link}'>立即进入 GMGN 实时终端</a>\n\n"
+            f"<i>大师提醒：该币种已通过防割扫描，符合‘低风险、高爆发’标准！</i>"
         )
         send_telegram(alert_msg)
-        print(f"✅ 信号已发送: {symbol}")
-    else:
-        # 如果抓取不到实时数据，发一个带真实地址的测试消息保持连通性
-        print("💡 暂无新信号，发送心跳包...")
+        return # 每次只报一个最稳的，防止手机炸裂
 
 if __name__ == "__main__":
-    main()
+    master_filter()
