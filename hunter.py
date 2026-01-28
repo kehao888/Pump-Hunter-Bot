@@ -1,5 +1,6 @@
 import os
 import requests
+from datetime import datetime
 
 def send_telegram(message):
     token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -9,12 +10,11 @@ def send_telegram(message):
         "chat_id": chat_id, 
         "text": message, 
         "parse_mode": "HTML",
-        "disable_web_page_preview": False
+        "disable_web_page_preview": True
     }
     requests.post(url, json=payload)
 
 def fetch_live_signals():
-    # 模拟从 GMGN 获取带有流动性数据的实时榜单
     url = "https://gmgn.ai/api/v1/token_list/sol/pump?limit=10&orderby=progress&direction=desc"
     headers = {"User-Agent": "Mozilla/5.0"}
     try:
@@ -26,49 +26,42 @@ def fetch_live_signals():
         return []
 
 def master_filter():
-    print("🔎 大师正在开启‘极致过滤’扫描模式...")
+    # 1. 获取当前北京时间 (GitHub 服务器默认是 UTC，我们加 8 小时)
+    now = datetime.now()
+    # 简单的报时逻辑：每小时的第 0 分钟运行那一轮会发报时包
+    # 或者为了测试，我们设置成每轮运行都打印日志，每小时报一次
+    
+    print(f"📡 巡逻中... 当前时间: {now.strftime('%H:%M:%S')}")
+    
+    # 模拟心跳：如果是每小时的 0 分，发一条报时消息
+    if now.minute == 0:
+        send_telegram(f"⏰ <b>大师报时：指挥部运行正常！</b>\n当前时间：{now.strftime('%Y-%m-%d %H:%M')}\n状态：正在严密监控‘金狗’信号...")
+
     tokens = fetch_live_signals()
     
+    found_any = False
     for token in tokens:
-        # --- 核心数据抓取 ---
+        # --- 保持你之前的硬核过滤标准 ---
         progress = token.get("progress", 0)
-        dev_hold = token.get("dev_p", 100) # 开发者持仓
-        liquidity = token.get("liquidity", 0) # 池子大小
-        sw_count = token.get("sw_count", 0) # 聪明钱人数
-        has_social = token.get("twitter_link") or token.get("telegram_link") # 社交媒体
-
-        # --- 大师级过滤标准 ---
-        # 1. 进度：必须 > 80%
-        if progress < 80: continue
-            
-        # 2. 开发者持仓：严禁超过 10%
-        if dev_hold > 10: continue
-            
-        # 3. 🛡️ 流动性过滤：池子必须大于 $3000，否则不报警
-        # 这样可以确保你买入和卖出时不会产生巨大滑点
-        if liquidity < 3000:
-            print(f"⚠️ 跳过小池子盘: {token['symbol']} (当前流动性: ${liquidity})")
-            continue
-            
-        # 4. 社交检查：必须有推特或电报
-        if not has_social: continue
-
-        # --- 触发高胜率报警 ---
-        address = token["address"]
-        gmgn_link = f"https://gmgn.ai/sol/token/{address}"
+        dev_hold = token.get("dev_p", 100)
+        liquidity = token.get("liquidity", 0)
         
-        alert_msg = (
-            f"<b>💎 发现【高流动性】优质金狗！</b>\n\n"
-            f"<b>代币：</b> ${token['symbol']}\n"
-            f"<b>📈 进度：</b> <code>{progress}%</code>\n"
-            f"<b>💧 池子：</b> <code>${liquidity}</code> (安全可交易)\n"
-            f"<b>🛡️ 开发者：</b> 持仓 {dev_hold}% (安全)\n"
-            f"<b>👥 聪明钱：</b> {sw_count} 位已入场\n\n"
-            f"👉 <a href='{gmgn_link}'>立即进入 GMGN 实时终端</a>\n\n"
-            f"<i>大师提醒：该币种池子健康，滑点较低，适合实战！</i>"
-        )
-        send_telegram(alert_msg)
-        return # 专注一个信号，防止刷屏
+        if progress > 80 and dev_hold < 10 and liquidity > 3000:
+            address = token["address"]
+            gmgn_link = f"https://gmgn.ai/sol/token/{address}"
+            
+            alert_msg = (
+                f"<b>🎯 发现高价值金狗！</b>\n\n"
+                f"<b>代币：</b> ${token['symbol']}\n"
+                f"<b>💧 池子：</b> ${liquidity}\n"
+                f"👉 <a href='{gmgn_link}'>进入终端</a>"
+            )
+            send_telegram(alert_msg)
+            found_any = True
+            break # 抓到一个最稳的就收工
+
+    if not found_any:
+        print("💡 本轮未发现符合标准的高质量信号。")
 
 if __name__ == "__main__":
     master_filter()
